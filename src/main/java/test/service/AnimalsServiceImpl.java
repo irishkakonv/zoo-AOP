@@ -2,47 +2,35 @@ package test.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import test.Cat;
-import test.Cow;
-import test.Dog;
+import test.Animal;
 import test.event.EventPublisherService;
 import test.event.FoodEvent;
+
+import java.util.List;
 
 
 @Service
 public class AnimalsServiceImpl implements AnimalsService {
 
-    private final Cat cat;
-    private final Dog dog;
-    private final Cow cow;
     private final EventPublisherService publisherService;
+    private final List<Animal> animalList;
 
     @Autowired
-    public AnimalsServiceImpl(Cat cat, Dog dog, Cow cow, EventPublisherService publisherService) {
-        this.cat = cat;
-        this.dog = dog;
-        this.cow = cow;
+    public AnimalsServiceImpl(EventPublisherService publisherService, List<Animal> animalList) {
         this.publisherService = publisherService;
+        this.animalList = animalList;
     }
 
     @Override
     public void startAngryVoices() throws InterruptedException {
-        cat.setIsHungry(true);
-        dog.setIsHungry(true);
-        cow.setIsHungry(true);
-        while (cat.isHungry() || dog.isHungry() || cow.isHungry()) {
-            if (cat.isHungry()) {
-                cat.voice();
-                publisherService.publishFoodEvent(new FoodEvent(this, cat));
-            }
-            if (dog.isHungry()) {
-                dog.voice();
-                publisherService.publishFoodEvent(new FoodEvent(this, dog));
-            }
-            if (cow.isHungry()) {
-                cow.voice();
-                publisherService.publishFoodEvent(new FoodEvent(this, cow));
-            }
+        animalList.forEach(animal -> animal.setIsHungry(true));
+        while (animalList.stream().anyMatch(Animal::isHungry)) {
+            animalList.forEach(animal -> {
+                if (animal.isHungry()) {
+                    animal.voice();
+                    publisherService.publishFoodEvent(new FoodEvent(this, animal));
+                }
+            });
             Thread.sleep(10000L);
         }
     }
